@@ -19,7 +19,7 @@
 		<dependencies>
 			<dependency>
 				<groupId>com.github.XDean</groupId>
-				<artifactId>Deannotation-parent</artifactId>
+				<artifactId>deannotation-parent</artifactId>
 				<version>0.2.1</version>
 				<scope>import</scope>
 				<type>pom</type>
