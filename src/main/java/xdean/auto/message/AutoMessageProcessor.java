@@ -60,13 +60,13 @@ public class AutoMessageProcessor extends XAbstractProcessor {
         resource = processingEnv.getFiler()
             .getResource(StandardLocation.CLASS_PATH, root ? "" : packageName, file);
       } catch (Exception e) {
-        debug().log("Fail to get file from CLASS_PATH, try SOURCE_PATH.");
+        debug().log("Fail to get file from CLASS_PATH, try CLASS_OUTPUT.");
         try {
           resource = assertNonNull(processingEnv.getFiler()
-              .getResource(StandardLocation.SOURCE_PATH, root ? "" : packageName, file))
+              .getResource(StandardLocation.CLASS_OUTPUT, root ? "" : packageName, file))
                   .todo(() -> error().log("Can't find file " + file, type));
         } catch (Exception e1) {
-          error().log("Fail to get file from SOURCE_PATH");
+          error().log("Fail to get file from CLASS_OUTPUT");
           throw e1;
         }
       }
