@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
 @Retention(RUNTIME)
 @Target({ TYPE, PACKAGE })
 public @interface AutoMessage {
-  String file();
+  String path();
 
   String generatedName() default "Messages";
 

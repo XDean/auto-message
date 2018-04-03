@@ -1,6 +1,6 @@
 package xdean.auto.message;
 
-@AutoMessage(file = "/golden.properties")
+@AutoMessage(path = "/golden.properties")
 public class Golden {
 
 }

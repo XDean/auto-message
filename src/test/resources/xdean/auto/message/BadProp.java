@@ -1,6 +1,6 @@
 package xdean.auto.message;
 
-@AutoMessage(file="/bad.properties")
+@AutoMessage(path="/bad.properties")
 public class BadProp {
 
 }

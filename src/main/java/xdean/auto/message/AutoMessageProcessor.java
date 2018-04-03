@@ -51,7 +51,7 @@ public class AutoMessageProcessor extends XAbstractProcessor {
             .todo(() -> error().log("Can only annotated on top-level class or package.", type));
     String packageName = (type.getKind() == ElementKind.PACKAGE ? type : type.getEnclosingElement()).asType().toString();
     AutoMessage am = type.getAnnotation(AutoMessage.class);
-    String originFile = am.file();
+    String originFile = am.path();
     boolean root = originFile.startsWith("/");
     String file = root ? originFile.substring(1) : originFile;
     try {

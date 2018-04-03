@@ -1,6 +1,6 @@
 package xdean.auto.message;
 
-@AutoMessage(file="notFound")
+@AutoMessage(path="notFound")
 public class NotFound {
 
 }
