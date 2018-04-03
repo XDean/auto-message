@@ -15,4 +15,6 @@ public @interface AutoMessage {
   String file();
 
   String generatedName() default "Messages";
+
+  String charset() default "UTF-8";
 }

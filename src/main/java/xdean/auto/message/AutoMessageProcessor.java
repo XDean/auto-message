@@ -1,8 +1,9 @@
 package xdean.auto.message;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -34,6 +35,7 @@ import xdean.annotation.processor.toolkit.annotation.SupportedAnnotation;
 @SupportedAnnotation(AutoMessage.class)
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 public class AutoMessageProcessor extends XAbstractProcessor {
+
   @Override
   public boolean processActual(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) throws AssertException {
     if (roundEnv.processingOver()) {
@@ -53,16 +55,29 @@ public class AutoMessageProcessor extends XAbstractProcessor {
     boolean root = originFile.startsWith("/");
     String file = root ? originFile.substring(1) : originFile;
     try {
-      FileObject resource = assertNonNull(processingEnv.getFiler()
-          .getResource(StandardLocation.CLASS_PATH, root ? "" : packageName, file))
-              .todo(() -> error().log("Can't find file " + file, type));
-      Path path = Paths.get(resource.toUri());
+      FileObject resource;
+      try {
+        resource = processingEnv.getFiler()
+            .getResource(StandardLocation.CLASS_PATH, root ? "" : packageName, file);
+      } catch (Exception e) {
+        debug().log("Fail to get file from CLASS_PATH, try SOURCE_PATH.");
+        try {
+          resource = assertNonNull(processingEnv.getFiler()
+              .getResource(StandardLocation.SOURCE_PATH, root ? "" : packageName, file))
+                  .todo(() -> error().log("Can't find file " + file, type));
+        } catch (Exception e1) {
+          error().log("Fail to get file from SOURCE_PATH");
+          throw e1;
+        }
+      }
+
+      BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openInputStream(), am.charset()));
       Builder builder = TypeSpec.interfaceBuilder(am.generatedName())
           .addAnnotation(
               AnnotationSpec.builder(Generated.class).addMember("value", "$S", AutoMessageProcessor.class.getName()).build())
           .addModifiers(Modifier.PUBLIC);
       AtomicInteger lineNumber = new AtomicInteger(0);
-      Files.lines(path)
+      reader.lines()
           .map(s -> extractKey(s, file, lineNumber.incrementAndGet(), type))
           .map(s -> {
             String name = dotToUnder(s, type);
@@ -76,7 +91,7 @@ public class AutoMessageProcessor extends XAbstractProcessor {
           .build()
           .writeTo(processingEnv.getFiler());
     } catch (Exception e) {
-      error().log("Fail to read " + file + " because " + e.getMessage(), type);
+      error().log("Fail to read " + file + " because " + getStackTraceString(e), type);
       return;
     }
   }
@@ -89,5 +104,20 @@ public class AutoMessageProcessor extends XAbstractProcessor {
 
   private String dotToUnder(String key, Element type) {
     return key.replace('.', '_').toUpperCase();
+  }
+
+  static String getStackTraceString(Throwable tr) {
+    if (tr == null) {
+      return "";
+    }
+    Throwable t = tr;
+    while (t.getCause() != null) {
+      t = t.getCause();
+    }
+    StringWriter sw = new StringWriter();
+    PrintWriter pw = new PrintWriter(sw);
+    t.printStackTrace(pw);
+    pw.flush();
+    return sw.toString();
   }
 }
