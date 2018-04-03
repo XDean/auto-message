@@ -15,6 +15,4 @@ public @interface AutoMessage {
   String file();
 
   String generatedName() default "Messages";
-
-  boolean currentPackage() default false;
 }

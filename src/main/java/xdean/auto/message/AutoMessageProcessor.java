@@ -49,12 +49,14 @@ public class AutoMessageProcessor extends XAbstractProcessor {
             .todo(() -> error().log("Can only annotated on top-level class or package.", type));
     String packageName = (type.getKind() == ElementKind.PACKAGE ? type : type.getEnclosingElement()).asType().toString();
     AutoMessage am = type.getAnnotation(AutoMessage.class);
-    String file = am.file();
+    String originFile = am.file();
+    boolean root = originFile.startsWith("/");
+    String file = root ? originFile.substring(1) : originFile;
     try {
-      FileObject resource = assertNonNull(processingEnv.getFiler().getResource(StandardLocation.CLASS_PATH,
-          am.currentPackage() ? packageName : "", file)).todo(() -> error().log("Can't find file " + file, type));
+      FileObject resource = assertNonNull(processingEnv.getFiler()
+          .getResource(StandardLocation.CLASS_PATH, root ? "" : packageName, file))
+              .todo(() -> error().log("Can't find file " + file, type));
       Path path = Paths.get(resource.toUri());
-      // processingEnv.getFiler().createSourceFile(name, originatingElements)
       Builder builder = TypeSpec.interfaceBuilder(am.generatedName())
           .addAnnotation(
               AnnotationSpec.builder(Generated.class).addMember("value", "$S", AutoMessageProcessor.class.getName()).build())
