@@ -78,6 +78,8 @@ public class AutoMessageProcessor extends XAbstractProcessor {
           .addModifiers(Modifier.PUBLIC);
       AtomicInteger lineNumber = new AtomicInteger(0);
       reader.lines()
+          .filter(s -> !s.startsWith("#"))
+          .filter(s -> s.trim().length() != 0)
           .map(s -> extractKey(s, file, lineNumber.incrementAndGet(), type))
           .map(s -> {
             String name = dotToUnder(s, type);
