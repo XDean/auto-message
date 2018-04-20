@@ -2,8 +2,6 @@ package xdean.auto.message;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -28,6 +26,7 @@ import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeSpec.Builder;
 
 import xdean.annotation.processor.toolkit.AssertException;
+import xdean.annotation.processor.toolkit.CommonUtil;
 import xdean.annotation.processor.toolkit.XAbstractProcessor;
 import xdean.annotation.processor.toolkit.annotation.SupportedAnnotation;
 
@@ -93,7 +92,7 @@ public class AutoMessageProcessor extends XAbstractProcessor {
           .build()
           .writeTo(processingEnv.getFiler());
     } catch (Exception e) {
-      error().log("Fail to read " + file + " because " + getStackTraceString(e), type);
+      error().log("Fail to read " + file + " because " + CommonUtil.getStackTraceString(e), type);
       return;
     }
   }
@@ -105,21 +104,6 @@ public class AutoMessageProcessor extends XAbstractProcessor {
   }
 
   private String dotToUnder(String key, Element type) {
-    return key.replace('.', '_').toUpperCase();
-  }
-
-  static String getStackTraceString(Throwable tr) {
-    if (tr == null) {
-      return "";
-    }
-    Throwable t = tr;
-    while (t.getCause() != null) {
-      t = t.getCause();
-    }
-    StringWriter sw = new StringWriter();
-    PrintWriter pw = new PrintWriter(sw);
-    t.printStackTrace(pw);
-    pw.flush();
-    return sw.toString();
+    return key.replace('.', '_').replace('-', '_').toUpperCase();
   }
 }
