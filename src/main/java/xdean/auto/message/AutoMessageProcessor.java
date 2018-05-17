@@ -52,7 +52,6 @@ public class AutoMessageProcessor extends XAbstractProcessor {
     // eclipse apt return packageName as 'package a.b.c'
     if (packageName.startsWith("package ")) {
       packageName = packageName.substring(8);
-      error().log("package name: " + packageName);
     }
     AutoMessage am = type.getAnnotation(AutoMessage.class);
     String originFile = am.path();
@@ -68,7 +67,7 @@ public class AutoMessageProcessor extends XAbstractProcessor {
         try {
           resource = assertNonNull(processingEnv.getFiler()
               .getResource(StandardLocation.CLASS_OUTPUT, root ? "" : packageName, file))
-                  .todo(() -> error().log("Can't find file " + file, type));
+                  .log("Can't find file " + file, type);
         } catch (Exception e1) {
           error().log("Fail to get file from CLASS_OUTPUT");
           throw e1;
