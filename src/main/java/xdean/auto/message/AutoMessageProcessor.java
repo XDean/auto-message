@@ -48,7 +48,12 @@ public class AutoMessageProcessor extends XAbstractProcessor {
     assertThat((type.getKind() == ElementKind.CLASS && ((TypeElement) type).getNestingKind() == NestingKind.TOP_LEVEL) ||
         type.getKind() == ElementKind.PACKAGE)
             .todo(() -> error().log("Can only annotated on top-level class or package.", type));
-    String packageName = (type.getKind() == ElementKind.PACKAGE ? type : type.getEnclosingElement()).asType().toString();
+    String packageName = (type.getKind() == ElementKind.PACKAGE ? type : type.getEnclosingElement()).toString();
+    // eclipse apt return packageName as 'package a.b.c'
+    if (packageName.startsWith("package ")) {
+      packageName = packageName.substring(8);
+      error().log("package name: " + packageName);
+    }
     AutoMessage am = type.getAnnotation(AutoMessage.class);
     String originFile = am.path();
     boolean root = originFile.startsWith("/");
@@ -88,9 +93,9 @@ public class AutoMessageProcessor extends XAbstractProcessor {
                 .build();
           })
           .forEach(builder::addField);
-      JavaFile.builder(packageName, builder.build())
-          .build()
-          .writeTo(processingEnv.getFiler());
+      JavaFile build = JavaFile.builder(packageName, builder.build())
+          .build();
+      build.writeTo(processingEnv.getFiler());
     } catch (Exception e) {
       error().log("Fail to read " + file + " because " + CommonUtil.getStackTraceString(e), type);
       return;
