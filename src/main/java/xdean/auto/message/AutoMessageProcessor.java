@@ -45,9 +45,8 @@ public class AutoMessageProcessor extends XAbstractProcessor {
   }
 
   private void handle(Element type) {
-    assertThat((type.getKind() == ElementKind.CLASS && ((TypeElement) type).getNestingKind() == NestingKind.TOP_LEVEL) ||
-        type.getKind() == ElementKind.PACKAGE)
-            .todo(() -> error().log("Can only annotated on top-level class or package.", type));
+    assertThat(type.getKind() == ElementKind.PACKAGE || ((TypeElement) type).getNestingKind() == NestingKind.TOP_LEVEL)
+        .todo(() -> error().log("Can only annotated on top-level class or package.", type));
     String packageName = (type.getKind() == ElementKind.PACKAGE ? type : type.getEnclosingElement()).toString();
     // eclipse apt return packageName as 'package a.b.c'
     if (packageName.startsWith("package ")) {
