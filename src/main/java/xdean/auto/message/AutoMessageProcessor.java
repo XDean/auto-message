@@ -73,27 +73,28 @@ public class AutoMessageProcessor extends XAbstractProcessor {
         }
       }
 
-      BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openInputStream(), am.charset()));
-      Builder builder = TypeSpec.interfaceBuilder(am.generatedName())
-          .addAnnotation(
-              AnnotationSpec.builder(Generated.class).addMember("value", "$S", AutoMessageProcessor.class.getName()).build())
-          .addModifiers(Modifier.PUBLIC);
-      AtomicInteger lineNumber = new AtomicInteger(0);
-      reader.lines()
-          .filter(s -> !s.startsWith("#"))
-          .filter(s -> s.trim().length() != 0)
-          .map(s -> extractKey(s, file, lineNumber.incrementAndGet(), type))
-          .map(s -> {
-            String name = dotToUnder(s, type);
-            return FieldSpec.builder(String.class, name)
-                .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
-                .initializer("$S", s)
-                .build();
-          })
-          .forEach(builder::addField);
-      JavaFile build = JavaFile.builder(packageName, builder.build())
-          .build();
-      build.writeTo(processingEnv.getFiler());
+      try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource.openInputStream(), am.charset()))) {
+        Builder builder = TypeSpec.interfaceBuilder(am.generatedName())
+            .addAnnotation(
+                AnnotationSpec.builder(Generated.class).addMember("value", "$S", AutoMessageProcessor.class.getName()).build())
+            .addModifiers(Modifier.PUBLIC);
+        AtomicInteger lineNumber = new AtomicInteger(0);
+        reader.lines()
+            .filter(s -> !s.startsWith("#"))
+            .filter(s -> s.trim().length() != 0)
+            .map(s -> extractKey(s, file, lineNumber.incrementAndGet(), type))
+            .map(s -> {
+              String name = dotToUnder(s, type);
+              return FieldSpec.builder(String.class, name)
+                  .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+                  .initializer("$S", s)
+                  .build();
+            })
+            .forEach(builder::addField);
+        JavaFile build = JavaFile.builder(packageName, builder.build())
+            .build();
+        build.writeTo(processingEnv.getFiler());
+      }
     } catch (Exception e) {
       error().log("Fail to read " + file + " because " + CommonUtil.getStackTraceString(e), type);
       return;
