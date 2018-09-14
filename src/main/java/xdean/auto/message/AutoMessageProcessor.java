@@ -2,8 +2,9 @@ package xdean.auto.message;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.util.LinkedHashSet;
+import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Generated;
 import javax.annotation.processing.Processor;
@@ -78,19 +79,20 @@ public class AutoMessageProcessor extends XAbstractProcessor {
             .addAnnotation(
                 AnnotationSpec.builder(Generated.class).addMember("value", "$S", AutoMessageProcessor.class.getName()).build())
             .addModifiers(Modifier.PUBLIC);
-        AtomicInteger lineNumber = new AtomicInteger(0);
-        reader.lines()
-            .filter(s -> !s.startsWith("#"))
-            .filter(s -> s.trim().length() != 0)
-            .map(s -> extractKey(s, file, lineNumber.incrementAndGet(), type))
-            .map(s -> {
-              String name = dotToUnder(s, type);
-              return FieldSpec.builder(String.class, name)
-                  .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
-                  .initializer("$S", s)
-                  .build();
-            })
-            .forEach(builder::addField);
+        LinkedHashSet<String> keys = new LinkedHashSet<>();
+        Properties p = new Properties() {
+          @Override
+          public synchronized Object put(Object key, Object value) {
+            keys.add(key.toString());
+            return super.put(key, value);
+          }
+        };
+        p.load(reader);
+        keys
+            .forEach(s -> builder.addField(FieldSpec.builder(String.class, dotToUnder(s))
+                .addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+                .initializer("$S", s)
+                .build()));
         JavaFile build = JavaFile.builder(packageName, builder.build())
             .build();
         build.writeTo(processingEnv.getFiler());
@@ -101,13 +103,7 @@ public class AutoMessageProcessor extends XAbstractProcessor {
     }
   }
 
-  private String extractKey(String line, String fileName, int lineNumber, Element type) {
-    int index = line.indexOf("=");
-    assertThat(index != -1).todo(() -> error().log(String.format("Bad define at line %d of %s", lineNumber, fileName), type));
-    return line.substring(0, index).trim();
-  }
-
-  private String dotToUnder(String key, Element type) {
+  private String dotToUnder(String key) {
     return key.replace('.', '_').replace('-', '_').toUpperCase();
   }
 }
